@@ -6,7 +6,11 @@
  */
 (() => {
   const V = document.createElement('video');
-  V.src = 'demo/clip.mp4';
+  // Two sources: Chromium builds frequently ship without an H.264 decoder, so
+  // VP9/WebM is listed first and mp4 is the fallback for older Safari.
+  const s1 = document.createElement('source'); s1.src = 'demo/clip.webm'; s1.type = 'video/webm';
+  const s2 = document.createElement('source'); s2.src = 'demo/clip.mp4'; s2.type = 'video/mp4';
+  V.appendChild(s1); V.appendChild(s2);
   V.muted = true; V.loop = true; V.playsInline = true; V.preload = 'auto';
   V.setAttribute('playsinline', '');
   // a detached <video> is never decoded by Chrome — it must be in the document.
@@ -185,6 +189,7 @@
   }
 
   V.addEventListener('loadeddata', () => { V.play().catch(() => {}); });
+  V.load();
   V.addEventListener('error', () => {
     const b = document.getElementById('state');
     b.textContent = 'clip failed to load';
