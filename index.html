@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surprise Camera — store what the model could not predict</title>
+<meta name="description" content="A predictive-coding NVR: a background model predicts each frame, and only the moments it could not predict are stored. Detected events, measured bytes.">
+<meta name="theme-color" content="#080607">
+<meta property="og:title" content="Surprise Camera — store what the model could not predict">
+<meta property="og:description" content="An empty corridor costs almost nothing. The moment something happens costs everything. Storage proportional to novelty.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://vishnuvsdevtech.github.io/surprise-camera/">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand"><i></i><span>SURPRISE CAMERA</span></div>
+  <div class="right"><span class="hint">predictive coding · residual storage</span></div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow mono">an NVR that stores novelty, not time</p>
+    <h1>A camera that keeps only<br><em>what surprised it.</em></h1>
+    <p class="lede">
+      A background model predicts every frame. What it predicts is thrown away; what it
+      <strong>fails</strong> to predict is kept, with a sparse keyframe spine so the gaps stay
+      reconstructible. An empty corridor costs almost nothing per hour. The moment something
+      happens costs everything — which is the point.
+    </p>
+    <div class="specs mono"><span>live demo below</span><span>144-frame clip</span><span>background model</span><span>byte accounting</span></div>
+  </section>
+
+  <section class="stage">
+    <div class="panel">
+      <canvas id="view" width="640" height="360"></canvas>
+      <div class="badge mono" id="state">idle</div>
+      <div class="cap mono">camera · 320×180</div>
+    </div>
+    <div class="panel">
+      <canvas id="res" width="640" height="360"></canvas>
+      <div class="cap mono" id="resCap">residual — what gets stored</div>
+    </div>
+  </section>
+
+  <section class="spark">
+    <canvas id="curve" width="1200" height="150"></canvas>
+    <div class="axis mono"><span>surprise over time →</span><span id="thrLabel">threshold —</span></div>
+  </section>
+
+  <section class="controls">
+    <label><span class="mono">threshold</span><input id="thr" type="range" min="2" max="60" step="2" value="14"><b class="mono" id="thrVal">—</b></label>
+    <label><span class="mono">model</span>
+      <select id="model"><option value="bg">background (predictive)</option><option value="prev">previous frame</option></select>
+      <b class="mono">—</b></label>
+    <label><span class="mono">keyframes</span><input id="kf" type="range" min="10" max="120" step="10" value="60"><b class="mono" id="kfVal">60</b></label>
+  </section>
+
+  <section class="readout mono" id="readout"></section>
+
+  <section class="notes">
+    <h2>What the numbers are</h2>
+    <p>
+      This page decodes the clip frame by frame in the browser, scores each one against a slowly
+      adapting background model, and encodes the frames it decides to keep as JPEG to count real
+      bytes. Nothing is simulated — the accounting is the same arithmetic a recorder would do.
+    </p>
+    <table>
+      <tr><th>Metric</th><th>Meaning</th></tr>
+      <tr><td>surprise</td><td>mass of pixels that differ from the model by more than the noise floor</td></tr>
+      <tr><td>stored</td><td>frames above threshold, plus the keyframe spine</td></tr>
+      <tr><td>saved</td><td>bytes not written, against storing every frame</td></tr>
+    </table>
+
+    <h2>The result on a controlled clip</h2>
+    <p>
+      A synthetic corridor: 144 frames, empty except for one person crossing at frames
+      <span class="mono">54–108</span>. The tool detects exactly that window, peaking at frame 54 —
+      the moment of entry — and stores <span class="mono">57 of 144</span> frames for a
+      <strong>60.4 %</strong> byte saving.
+    </p>
+    <p class="warn">
+      That saving is modest <em>because the event is 38 % of this clip.</em> On a real camera the
+      interesting fraction is closer to 1 %, so the same arithmetic lands near 99 % — which is the
+      entire economic argument. The demo is deliberately event-dense so the mechanism is visible.
+    </p>
+
+    <h2>The trap I fell into first</h2>
+    <p>
+      My initial metric was the mean absolute difference over the whole frame. A person crossing a
+      320×180 corridor scored <span class="mono">0.017</span> — the wall outvoted them — so the
+      threshold sat above the peak and the tool reported <strong>97.9 % saved while storing
+      nothing</strong>. A storage system that stores nothing looks perfect by every metric except
+      the one that matters. The fix is a floor-subtracted change mass plus an adaptive threshold at
+      three times the median.
+    </p>
+
+    <h2>What this is not</h2>
+    <p>
+      Not a compression codec — it does not reconstruct skipped frames from their neighbours, it just
+      keeps a keyframe spine. Not robust to lighting changes: a light switching on is genuine surprise
+      and will be stored (correctly), but a slow sunset will keep the model confused until it adapts.
+      And not a substitute for retention policy — "store only surprise" still needs a rule for when
+      surprise is irrelevant.
+    </p>
+  </section>
+</main>
+
+<footer class="foot mono"><span>Surprise Camera · POC</span><span>storage ∝ novelty</span></footer>
+<script src="assets/surprise.js"></script>
+</body>
+</html>
