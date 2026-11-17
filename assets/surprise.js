@@ -8,6 +8,11 @@
   const V = document.createElement('video');
   V.src = 'demo/clip.mp4';
   V.muted = true; V.loop = true; V.playsInline = true; V.preload = 'auto';
+  V.setAttribute('playsinline', '');
+  // a detached <video> is never decoded by Chrome — it must be in the document.
+  // Kept at 1px, transparent, and out of the layout: the canvases are the UI.
+  V.style.cssText = 'position:absolute;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+  document.body.appendChild(V);
 
   const view = document.getElementById('view');
   const res = document.getElementById('res');
@@ -180,6 +185,11 @@
   }
 
   V.addEventListener('loadeddata', () => { V.play().catch(() => {}); });
+  V.addEventListener('error', () => {
+    const b = document.getElementById('state');
+    b.textContent = 'clip failed to load';
+    b.className = 'badge';
+  });
   ['thr', 'kf', 'model'].forEach((id) => el(id).addEventListener('input', () => { drawCurve(thrNow()); readout(thrNow()); }));
   // the clip is short; nudge play on first interaction in case autoplay is blocked
   document.addEventListener('click', () => { if (V.paused) V.play().catch(() => {}); }, { once: true });
