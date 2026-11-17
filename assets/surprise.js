@@ -183,6 +183,13 @@
     el('thrLabel').textContent = 'threshold ' + thr.toFixed(4);
     el('kfVal').textContent = el('kf').value;
     const on = stored[stored.length - 1];
+    // The residual panel is legitimately black when nothing is happening — which
+    // reads as "broken" to anyone who lands on the page mid-clip. Say it plainly.
+    const rc = el('resCap');
+    rc.textContent = score > thr
+      ? 'residual ' + score.toFixed(4) + ' — storing'
+      : 'nothing to store — residual ' + score.toFixed(4);
+
     const badge = el('state');
     badge.className = 'badge ' + (on ? 'rec' : '');
     badge.textContent = on ? 'storing frame' : 'skipping — predicted';
